@@ -43,3 +43,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Sensitive Android credentials — never committed
+/android/key.properties
+/android/keystore/
+/android/app/google-services.json
+/android/app/*.jks
+/android/app/*.keystore

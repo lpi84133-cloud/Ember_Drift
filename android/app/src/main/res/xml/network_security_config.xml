@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Cleartext HTTP is allowed at the base level because affiliate/tracker
+    redirect chains (e.g. http://afsub.com/push/ delivered via a push
+    payload) ship as plain HTTP. Without this, Android returns
+    net::ERR_CLEARTEXT_NOT_PERMITTED and the WebView renders its native
+    black error page. See .cursor/rules/gray_part_pitfalls.md §17.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

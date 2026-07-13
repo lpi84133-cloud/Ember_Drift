@@ -30,7 +30,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
     super.initState();
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(AppColors.obsidianDark)
+      ..setBackgroundColor(Colors.white)
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (_) {
@@ -78,7 +78,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
           if (!_failed) WebViewWidget(controller: _controller),
           if (_loading && !_failed)
             const ColoredBox(
-              color: AppColors.obsidianDark,
+              color: Colors.white,
               child: Center(
                 child: CircularProgressIndicator(color: AppColors.emberOrange),
               ),

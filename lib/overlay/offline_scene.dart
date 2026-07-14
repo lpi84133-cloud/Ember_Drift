@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../bridge/insight.dart';
 import '../core/asset_paths.dart';
 import 'molten_button.dart';
 
@@ -24,8 +25,15 @@ class OfflineScene extends StatefulWidget {
 class _OfflineSceneState extends State<OfflineScene> {
   bool _spinning = false;
 
+  @override
+  void initState() {
+    super.initState();
+    Insight.screen('offline');
+  }
+
   Future<void> _retry() async {
     if (_spinning) return;
+    Insight.event('offline_retry');
     setState(() => _spinning = true);
     await Future<void>.delayed(const Duration(milliseconds: 600));
     if (!mounted) return;

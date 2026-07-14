@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../bridge/insight.dart';
 import '../core/asset_paths.dart';
 import '../ignition/alert_center.dart';
 import '../ignition/stash_hold.dart';
@@ -17,7 +18,7 @@ import 'stream_scene.dart';
 /// camera on the long edge. We therefore intentionally SKIP `SafeArea`
 /// on the button column — the background artwork already handles cutout
 /// gutters, and adding an inset would shift the buttons off-center.
-class AlertPrompt extends StatelessWidget {
+class AlertPrompt extends StatefulWidget {
   const AlertPrompt({
     super.key,
     required this.stash,
@@ -31,31 +32,47 @@ class AlertPrompt extends StatelessWidget {
   final WireWatch wireWatch;
   final String streamUrl;
 
-  Future<void> _accept(BuildContext context) async {
-    final bool ok = await alertCenter.requestPermission();
-    if (!ok) {
-      await stash.writeInviteMuteUntil(_muteTarget());
-    }
-    if (context.mounted) _proceed(context);
+  @override
+  State<AlertPrompt> createState() => _AlertPromptState();
+}
+
+class _AlertPromptState extends State<AlertPrompt> {
+  @override
+  void initState() {
+    super.initState();
+    Insight.screen('push_invite');
   }
 
-  Future<void> _skip(BuildContext context) async {
-    await stash.writeInviteMuteUntil(_muteTarget());
-    if (context.mounted) _proceed(context);
+  Future<void> _accept() async {
+    Insight.event('push_invite_accept');
+    final bool granted = await widget.alertCenter.requestPermission();
+    Insight.tag('notif_permission', granted ? 'granted' : 'denied');
+    Insight.event(granted ? 'push_granted' : 'push_denied');
+    if (!granted) {
+      await widget.stash.writeInviteMuteUntil(_muteTarget());
+    }
+    if (mounted) _proceed();
+  }
+
+  Future<void> _skip() async {
+    Insight.event('push_invite_skip');
+    Insight.tag('notif_permission', 'skipped');
+    await widget.stash.writeInviteMuteUntil(_muteTarget());
+    if (mounted) _proceed();
   }
 
   int _muteTarget() =>
       DateTime.now().millisecondsSinceEpoch ~/ 1000 +
       MissionFacade.inviteQuietWindow;
 
-  void _proceed(BuildContext context) {
+  void _proceed() {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (_) => StreamScene(
-          streamUrl: streamUrl,
-          stash: stash,
-          alertCenter: alertCenter,
-          wireWatch: wireWatch,
+          streamUrl: widget.streamUrl,
+          stash: widget.stash,
+          alertCenter: widget.alertCenter,
+          wireWatch: widget.wireWatch,
         ),
       ),
     );
@@ -77,7 +94,7 @@ class AlertPrompt extends StatelessWidget {
           label: 'Accept',
           compact: landscape,
           width: landscape ? size.width * 0.34 : size.width * 0.66,
-          onPressed: () => _accept(context),
+          onPressed: _accept,
         ),
         SizedBox(height: landscape ? 10 : 14),
         MoltenPill(
@@ -85,7 +102,7 @@ class AlertPrompt extends StatelessWidget {
           compact: landscape,
           tone: MoltenTone.ash,
           width: landscape ? size.width * 0.24 : size.width * 0.4,
-          onPressed: () => _skip(context),
+          onPressed: _skip,
         ),
       ],
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../bridge/insight.dart';
 import '../core/app_colors.dart';
 import '../core/app_urls.dart';
 import '../core/asset_paths.dart';
@@ -23,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    Insight.screen('menu');
     _load();
   }
 

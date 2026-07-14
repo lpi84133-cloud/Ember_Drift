@@ -1,9 +1,11 @@
+import 'package:clarity_flutter/clarity_flutter.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'bridge/insight.dart';
 import 'core/app_colors.dart';
 import 'ignition/agent_mask.dart';
 import 'ignition/alert_center.dart';
@@ -69,12 +71,15 @@ Future<void> main() async {
   final RemoteValve remoteValve = RemoteValve(stash);
   final AlertCenter alertCenter = AlertCenter(stash);
 
-  runApp(EmberDriftShell(
-    stash: stash,
-    wireWatch: wireWatch,
-    beacon: beacon,
-    remoteValve: remoteValve,
-    alertCenter: alertCenter,
+  runApp(ClarityWidget(
+    clarityConfig: Insight.config,
+    app: EmberDriftShell(
+      stash: stash,
+      wireWatch: wireWatch,
+      beacon: beacon,
+      remoteValve: remoteValve,
+      alertCenter: alertCenter,
+    ),
   ));
 }
 

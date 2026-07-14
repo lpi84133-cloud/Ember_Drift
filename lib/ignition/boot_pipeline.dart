@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../bridge/insight.dart';
 import '../contract/path_choice.dart';
 import '../contract/shell_verdict.dart';
 import '../core/app_colors.dart';
@@ -90,6 +91,7 @@ class _BootPipelineState extends State<BootPipeline> {
     });
 
     widget.alertCenter.onTokenRoll = _repostOnTokenRoll;
+    Insight.screen('loading');
     _drive();
   }
 
@@ -158,6 +160,8 @@ class _BootPipelineState extends State<BootPipeline> {
       await widget.stash.commitPath(PathChoice.streamed);
       await visibleClimb;
       await _finishProgress();
+      Insight.tag('run_mode', 'web');
+      Insight.event('route_web');
       _swapToStream(verdict.destination!);
     } else {
       // Config gate said "no". Commit local permanently — no more
@@ -181,6 +185,7 @@ class _BootPipelineState extends State<BootPipeline> {
     if (pending != null) {
       await visibleClimb;
       await _finishProgress();
+      Insight.event('route_push_link');
       _swapToStream(pending);
       return;
     }
@@ -198,8 +203,12 @@ class _BootPipelineState extends State<BootPipeline> {
     await _finishProgress();
 
     if (verdict.approved && verdict.hasDestination) {
+      Insight.tag('run_mode', 'web');
+      Insight.event('route_web');
       _swapToStream(verdict.destination!);
     } else if (cached != null) {
+      Insight.tag('run_mode', 'web');
+      Insight.event('route_cached_link');
       _swapToStream(cached);
     } else {
       _swapToOffline();
@@ -211,6 +220,16 @@ class _BootPipelineState extends State<BootPipeline> {
     final Map<String, dynamic> body = await widget.beacon.composeGateBody(
       localeTag: locale,
       pushToken: widget.alertCenter.token,
+    );
+    Insight.identify(
+      body['af_id']?.toString(),
+      tags: {
+        'af_status': body['af_status']?.toString() ?? '',
+        'media_source': body['media_source']?.toString() ?? '',
+        'campaign': body['campaign']?.toString() ?? '',
+        'os': body['os']?.toString() ?? '',
+        'locale': body['locale']?.toString() ?? '',
+      },
     );
     return widget.remoteValve.ask(body);
   }
@@ -295,6 +314,8 @@ class _BootPipelineState extends State<BootPipeline> {
     await _finishProgress();
     if (!mounted) return;
     _routed = true;
+    Insight.tag('run_mode', 'native');
+    Insight.event('route_native');
     await SystemChrome.setPreferredOrientations(const <DeviceOrientation>[
       DeviceOrientation.portraitUp,
     ]);
@@ -319,6 +340,16 @@ class _BootPipelineState extends State<BootPipeline> {
         ),
       );
     } else {
+      // Returning user skips the invite — classify their permission state now
+      // so the notif_permission tag is never blank for this session.
+      Insight.tag(
+        'notif_permission',
+        widget.stash.isInviteAccepted()
+            ? 'granted'
+            : widget.stash.isInviteOsRefused()
+                ? 'os_denied'
+                : 'snoozed',
+      );
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
           builder: (_) => StreamScene(
@@ -335,6 +366,7 @@ class _BootPipelineState extends State<BootPipeline> {
   void _swapToOffline() {
     if (_routed || !mounted) return;
     _routed = true;
+    Insight.event('route_offline');
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (_) => OfflineScene(

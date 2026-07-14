@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../bridge/insight.dart';
 import '../core/app_colors.dart';
 import '../core/asset_paths.dart';
 import '../core/daily_tasks.dart';
@@ -30,6 +31,8 @@ class _GameScreenState extends State<GameScreen> {
     _controller = GameController(level: widget.level);
     _controller.addListener(_onControllerChanged);
     _initStorage();
+    Insight.screen('game');
+    Insight.tag('level', '${widget.level}');
   }
 
   Future<void> _initStorage() async {
@@ -49,6 +52,11 @@ class _GameScreenState extends State<GameScreen> {
       _rewardApplied = true;
       _lastScore = _controller.computeScore();
       _applyWinRewards(_lastScore!);
+      Insight.event('game_win');
+      Insight.tag('level_cleared', '${widget.level}');
+    } else if (_controller.status == GameStatus.lost) {
+      Insight.event('game_lose');
+      Insight.tag('level_lost', '${widget.level}');
     }
     if (mounted) setState(() {});
   }
